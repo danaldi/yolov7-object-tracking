@@ -197,26 +197,6 @@ def detect(save_img=False):
 
                 #loop over tracks
                 for track in tracks:
-                    # color = compute_color_for_labels(id)
-                    #draw colored tracks
-                    if colored_trk:
-                        [cv2.line(im0, (int(track.centroidarr[i][0]),
-                                    int(track.centroidarr[i][1])), 
-                                    (int(track.centroidarr[i+1][0]),
-                                    int(track.centroidarr[i+1][1])),
-                                    rand_color_list[track.id], thickness=2) 
-                                    for i,_ in  enumerate(track.centroidarr) 
-                                      if i < len(track.centroidarr)-1 ] 
-                    #draw same color tracks
-                    else:
-                        [cv2.line(im0, (int(track.centroidarr[i][0]),
-                                    int(track.centroidarr[i][1])), 
-                                    (int(track.centroidarr[i+1][0]),
-                                    int(track.centroidarr[i+1][1])),
-                                    (255,0,0), thickness=2) 
-                                    for i,_ in  enumerate(track.centroidarr) 
-                                      if i < len(track.centroidarr)-1 ] 
-
                     if save_txt and not save_with_object_id:
                         # Normalize coordinates
                         txt_str += "%i %i %f %f" % (track.id, track.detclass, track.centroidarr[-1][0] / im0.shape[1], track.centroidarr[-1][1] / im0.shape[0])
@@ -244,14 +224,15 @@ def detect(save_img=False):
             if view_img:
                 cv2.imshow(str(p), im0)
                 if cv2.waitKey(1) == ord('q'):  # q to quit
-                  cv2.destroyAllWindows()
-                  raise StopIteration
+                    cv2.destroyAllWindows()
+                    raise StopIteration
 
             # Save results (image with detections)
+
             if save_img:
                 if dataset.mode == 'image':
                     cv2.imwrite(save_path, im0)
-                    print(f" The image with the result is saved in: {save_path}")
+                    print(f"The image with the result is saved in: {save_path}")
                 else:  # 'video' or 'stream'
                     if vid_path != save_path:  # new video
                         vid_path = save_path
@@ -261,11 +242,23 @@ def detect(save_img=False):
                             fps = vid_cap.get(cv2.CAP_PROP_FPS)
                             w = int(vid_cap.get(cv2.CAP_PROP_FRAME_WIDTH))
                             h = int(vid_cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+                            # Save video
+                            vid_writer = cv2.VideoWriter(save_path, cv2.VideoWriter_fourcc(*'mp4v'), fps, (w, h))
+                            print(f"The video with the result is saved in: {save_path}")
                         else:  # stream
                             fps, w, h = 30, im0.shape[1], im0.shape[0]
-                            save_path += '.mp4'
-                        vid_writer = cv2.VideoWriter(save_path, cv2.VideoWriter_fourcc(*'mp4v'), fps, (w, h))
+                            # Save video
+                            vid_writer = cv2.VideoWriter(save_path + '.mp4', cv2.VideoWriter_fourcc(*'mp4v'), fps, (w, h))
+                            print(f"The video with the result is saved in: {save_path + '.mp4'}")
+                        frame_idx = 0
                     vid_writer.write(im0)
+                    # Save image
+                    image_name = os.path.splitext(os.path.basename(save_path))[0] + f"_frame_{frame_idx}.jpg"
+                    image_path = os.path.join(os.path.dirname(save_path), image_name)
+                    cv2.imwrite(image_path, im0)
+                    print(f"The image with the result is saved in: {image_path}")
+                    frame_idx += 1
+
 
     if save_txt or save_img or save_with_object_id:
         s = f"\n{len(list(save_dir.glob('labels/*.txt')))} labels saved to {save_dir / 'labels'}" if save_txt else ''
